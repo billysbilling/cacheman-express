@@ -1,33 +1,76 @@
-# cacheman-express
+cacheman-express
+================
+
 Cache middleware for express.js
 
 ```javascript
-var Cacheman = require('cacheman');
-var Engine = require('cacheman-...');
-var CachemanExpress = require('cacheman-express');
+const express = require('express');
+const Cacheman = require('cacheman');
+const Engine = require('cacheman-...');
+const CachemanExpress = require('cacheman-express');
 
-var engine = new Engine();
-var cacheman = new Cacheman({ engine: engine });
-
-var expressCache = new CachemanExpress({
-	cacheman: cacheman,
-	ttl: '10s'
+// Usage for all application routes
+const app = express();
+const cacheman = new Cacheman('my-app-cache', {
+  ttl: 60, // 1 minute
+  engine: new Engine();
 });
+const keyFn = (req) => { return req.path; }
+const expressCache = CachemanExpress(cacheman, keyFn);
 
-app.get('/api/:collection', expressCache.cache(), function(req, res, next) {
-  res.send({ foo: 'bar' });
+app.use(expressCache);
+
+// Will be called only if no data present in cache
+app.route('/')
+  .get((req, res, next) => {
+    res.send({ foo: 'bar' });
+  });
+
+// Will delete data from cache
+app.route('/')
+  .post((req, res, next) => {
+    // ...
+  })
+  .put((req, res, next) => {
+    // ...
+  })
+  .patch((req, res, next) => {
+    // ...
+  })
+  .delete((req, res, next) => {
+    // ...
+  });
+
+
+// Usage for a particular route only
+const app = express();
+const cacheman = new Cacheman('my-app-cache', {
+  ttl: 60, // 1 minute
+  engine: new Engine();
 });
+const keyFn = (req) => { return req.path; }
+const expressCache = CachemanExpress(cacheman, keyFn);
 
-app.post('/api/:collection', expressCache.clear(), function(req, res, next) {
-  res.send({ foo: 'bar' });
-});
+app.use('/collection/:id?', expressCache);
 
-app.get('/api/:collection/:id', expressCache.cache('1s'), function(req, res, next) {
-  res.send({ foo: 'bar' });
-});
+// Will be called only if no data present in cache
+app.route('/collection/:id?')
+  .get((req, res, next) => {
+    res.send({ foo: 'bar' });
+  });
 
-app.delete('/api/:collection/:id', expressCache.clear({ deleteKey: '/api/:collection' }), function(req, res, next) {
-  res.send({ foo: 'bar' });
-});
-
+// Will delete data from cache
+app.route('/collection/:id?')
+  .post((req, res, next) => {
+    // ...
+  })
+  .put((req, res, next) => {
+    // ...
+  })
+  .patch((req, res, next) => {
+    // ...
+  })
+  .delete((req, res, next) => {
+    // ...
+  });
 ```
